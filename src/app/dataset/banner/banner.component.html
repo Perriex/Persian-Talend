@@ -1,11 +1,16 @@
 <div class="container">
   <button mat-raised-button color="primary">
-    <div>
+    <div *ngIf="!isWait">
       <label for="file">بارگزاری دیتاست</label>
       <input id="file" type="file" (change)="fileChange($event)" style="visibility: hidden" accept=".csv">
     </div>
+    <div *ngIf="isWait">
+      <label class="loading">درحال بارگزاری...</label>
+    </div>
   </button>
-  <a mat-raised-button href=" /" target="_blank">افزودن دیتاست</a>
+  <a mat-raised-button routerLink="/pipelines/sqlForm">افزودن دیتاست</a>
+  <!--  <button mat-raised-button (click)="openDialog()">افزودن دیتاست</button>-->
+
   <div></div>
 
   <form class="search-box" #searchBox="ngForm">

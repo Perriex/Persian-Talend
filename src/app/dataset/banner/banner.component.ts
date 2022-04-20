@@ -1,10 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { Router } from '@angular/router';
-import { query } from '@angular/animations';
 import { HttpClient } from '@angular/common/http';
-import { DataSetServiceService } from '../../services/data-set-service.service';
-import { SendRequestService } from '../../services/send-request-service.service';
+import { MatDialog } from '@angular/material/dialog';
+import { SqlFormModalComponent } from './sql-form-modal/sql-form-modal.component';
+import { ToastService } from 'src/app/common/toast.service';
 
 @Component({
   selector: 'app-banner',
@@ -15,24 +14,31 @@ export class BannerComponent implements OnInit {
   query: string = '';
   currentSearchTerm = new BehaviorSubject<string>('');
   element_data: any = [];
+  isWait = false;
 
   constructor(
-    private router: Router,
+    private _toaster: ToastService,
     private httpClient: HttpClient,
-    private dataSetService: DataSetServiceService,
-    private sendRequestService: SendRequestService
+    public dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
     this.currentSearchTerm.subscribe((current) => (this.query = current));
   }
+  animal: string = '';
+  name: string = '';
 
-  // async search(value: any) {
-  //   console.log(value.query);
-  //   let element_data= this.dataSetService.getDataSets().filter((data:any)=> data.name===value.query);
-  //
-  //   // this.router.navigate(['/dataSet', value.query]);
-  // }
+  openDialog(): void {
+    const dialogRef = this.dialog.open(SqlFormModalComponent, {
+      width: '250px',
+
+      data: { name: this.name, animal: this.animal },
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      this.animal = result;
+    });
+  }
 
   private getExtension(filename: String) {
     var parts = filename.split('.');
@@ -40,6 +46,7 @@ export class BannerComponent implements OnInit {
   }
 
   async fileChange(event: any) {
+    this.isWait = true;
     let files: FileList | null;
     let details: any;
     if (event.target !== null) {
@@ -49,7 +56,11 @@ export class BannerComponent implements OnInit {
         let file = files[0];
         let formData = new FormData();
         if (this.getExtension(file.name)) {
-          alert('فرمت فایل آپلود شده باید csv باشد');
+          this._toaster.openSnackBar(
+            'فرمت فایل آپلود شده باید csv باشد',
+            'talent'
+          );
+          this.isWait = false;
           return;
         }
         details = {
@@ -68,10 +79,15 @@ export class BannerComponent implements OnInit {
             )}`,
             formData
           )
-          .subscribe((res) => {
-            console.log('File Uploaded ...');
-            location.reload();
-          });
+          .subscribe(
+            () => {
+              location.reload();
+            },
+            (error) => {
+              this._toaster.openSnackBar(error.error.message, 'server');
+              this.isWait = false;
+            }
+          );
       }
     }
   }
